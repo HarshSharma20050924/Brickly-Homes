@@ -6,7 +6,7 @@ const TOTAL_FRAMES = 1749;
 
 function getFrameUrl(i: number) {
   const n = i + 136;
-  return `/image asset/frame_${String(n).padStart(6, '0')}.jpg`;
+  return `/image-asset/frame_${String(n).padStart(6, '0')}.jpg`;
 }
 
 function lerp(a: number, b: number, t: number) {
@@ -59,11 +59,42 @@ export default function Hero() {
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // ── Draw ────────────────────────────────────────────────────────────────
+  // ── Draw (with fallback to nearest loaded frame if exact target isn't ready) ─
   const drawFrame = useCallback((index: number) => {
     const canvas = canvasRef.current;
-    const img = imagesRef.current[Math.round(index)];
-    if (!canvas || !img || !img.complete || img.naturalWidth === 0) return false;
+    if (!canvas) return false;
+
+    const targetIdx = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.round(index)));
+    let img = imagesRef.current[targetIdx];
+
+    // Fallback: If exact frame is missing/loading, find closest available frame
+    if (!img || !img.complete || img.naturalWidth === 0) {
+      let closest = -1;
+      let minDiff = Infinity;
+
+      for (let offset = 1; offset < TOTAL_FRAMES; offset++) {
+        if (offset > minDiff) break;
+        const left = targetIdx - offset;
+        const right = targetIdx + offset;
+
+        if (left >= 0 && imagesRef.current[left]?.complete && imagesRef.current[left]?.naturalWidth! > 0) {
+          closest = left;
+          minDiff = offset;
+          break;
+        }
+        if (right < TOTAL_FRAMES && imagesRef.current[right]?.complete && imagesRef.current[right]?.naturalWidth! > 0) {
+          closest = right;
+          minDiff = offset;
+          break;
+        }
+      }
+
+      if (closest !== -1) {
+        img = imagesRef.current[closest];
+      } else {
+        return false;
+      }
+    }
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return false;
@@ -138,15 +169,42 @@ export default function Hero() {
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
-  // ── Preload ──────────────────────────────────────────────────────────────
+  // ── Staged Priority Preloader ─────────────────────────────────────────────
   useEffect(() => {
     let loaded = 0;
-    const CONCURRENCY = 15;
-    let indexToLoad = 0;
+    const isLoaded = new Uint8Array(TOTAL_FRAMES);
+
+    // Build loading priority order:
+    // Pass 1: Every 5th keyframe (0, 5, 10... 1745) for fast end-to-end coverage
+    // Pass 2: Every 2nd frame
+    // Pass 3: All remaining frames
+    const queue: number[] = [];
+
+    // Stage 1: Keyframes across full timeline
+    for (let i = 0; i < TOTAL_FRAMES; i += 5) {
+      queue.push(i);
+    }
+    // Stage 2: Half-frames
+    for (let i = 0; i < TOTAL_FRAMES; i += 2) {
+      if (i % 5 !== 0) queue.push(i);
+    }
+    // Stage 3: Remaining frames
+    for (let i = 0; i < TOTAL_FRAMES; i++) {
+      if (i % 2 !== 0 && i % 5 !== 0) queue.push(i);
+    }
+
+    let queueIdx = 0;
+    const CONCURRENCY = 16;
 
     const loadNext = () => {
-      if (indexToLoad >= TOTAL_FRAMES) return;
-      const i = indexToLoad++;
+      // Find next unloaded frame from queue
+      while (queueIdx < queue.length && isLoaded[queue[queueIdx]]) {
+        queueIdx++;
+      }
+      if (queueIdx >= queue.length) return;
+
+      const i = queue[queueIdx++];
+      isLoaded[i] = 1;
 
       const img = new Image();
       img.src = getFrameUrl(i);
