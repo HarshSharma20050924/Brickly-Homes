@@ -28,18 +28,14 @@ export default function Loader({ onComplete }: { onComplete: () => void }) {
     );
 
     const animate = () => {
-      // Smooth baseline progression up to 85% so it never stalls at 0%
-      if (smoothPctRef.current < 85 && !isKeyframesDoneRef.current) {
-        smoothPctRef.current += 0.8;
-      } else if (isKeyframesDoneRef.current) {
-        smoothPctRef.current = 100;
-      }
+      // Continuous smooth baseline progression towards 100% over ~2.5 seconds
+      smoothPctRef.current = Math.min(100, smoothPctRef.current + 0.95);
 
       const targetPct = Math.max(smoothPctRef.current, realPctRef.current);
       const diff = targetPct - currentPctRef.current;
 
       if (Math.abs(diff) > 0.05) {
-        currentPctRef.current += diff * 0.15;
+        currentPctRef.current += diff * 0.16;
       } else {
         currentPctRef.current = targetPct;
       }
@@ -56,14 +52,14 @@ export default function Loader({ onComplete }: { onComplete: () => void }) {
         }
       }
 
-      if (displayValue >= 100 && (isKeyframesDoneRef.current || currentPctRef.current >= 99.5)) {
+      if (displayValue >= 100) {
         if (numberRef.current) numberRef.current.textContent = '100';
         if (barRef.current) barRef.current.style.transform = 'scaleX(1)';
 
         setTimeout(() => {
           setIsVisible(false);
           setTimeout(onComplete, 400);
-        }, 200);
+        }, 150);
       } else {
         rafRef.current = requestAnimationFrame(animate);
       }
