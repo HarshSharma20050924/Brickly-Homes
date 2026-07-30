@@ -66,6 +66,7 @@ export default function ScrollSequence() {
 
   return (
     <section
+      id="projects"
       ref={containerRef}
       className="relative bg-[#fcfcfc]"
       style={{ height: `${n * 100}vh` }}
@@ -117,14 +118,14 @@ export default function ScrollSequence() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
                 
                 <div className="absolute bottom-6 left-6 right-6 flex flex-col justify-end z-10">
-                  <span className="font-sans text-xs font-bold tracking-[0.2em] uppercase text-white/80 drop-shadow">
+                  <span className="font-sans text-xs font-bold tracking-[0.2em] text-white/80 drop-shadow">
                     {String(i + 1).padStart(2, '0')} · {proj.location}
                   </span>
                   <div className="font-heading font-bold text-2xl md:text-4xl text-white mt-1 mb-4 drop-shadow-lg">{proj.label}</div>
                   
                   <Link
                     to={`/project/${proj.id}`}
-                    className="inline-flex w-fit items-center justify-center px-6 py-2.5 bg-white text-black font-sans text-xs tracking-widest font-bold uppercase rounded hover:bg-gray-200 transition-colors pointer-events-auto"
+                    className="inline-flex w-fit items-center justify-center px-6 py-2.5 bg-white text-black font-sans text-xs tracking-widest font-bold rounded hover:bg-gray-200 transition-colors pointer-events-auto"
                   >
                     View Details
                   </Link>
@@ -140,7 +141,7 @@ export default function ScrollSequence() {
           style={{ opacity: titleOpacity, x: titleX }}
         >
           <h2 className="text-black flex flex-col">
-            <span className="font-sans text-[10px] tracking-[0.28em] uppercase font-bold mb-2 text-gray-400">
+            <span className="font-sans text-[10px] tracking-[0.28em] font-bold mb-2 text-gray-400">
               Brickly Homes · Portfolio
             </span>
             <span className="font-heading font-bold text-5xl md:text-[6vw] tracking-tight leading-none">

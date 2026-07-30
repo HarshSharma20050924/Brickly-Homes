@@ -21,16 +21,23 @@ const contacts = [
 ];
 
 function HomePage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    return !sessionStorage.getItem('hasLoadedIntro');
+  });
   const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  const handleComplete = () => {
+    sessionStorage.setItem('hasLoadedIntro', 'true');
+    setLoading(false);
+  };
+
   return (
     <div className="bg-white min-h-screen text-black">
-      <Loader onComplete={() => setLoading(false)} />
+      {loading && <Loader onComplete={handleComplete} />}
 
       {/* Global contact popover */}
       <AnimatePresence>

@@ -1,152 +1,150 @@
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform, useMotionTemplate } from 'motion/react';
 import { useRef } from 'react';
+import { FillText, FillTextInverted, ImageReveal } from './AnimationPrimitives';
 
-// Real architecture home images
-const archImages = [
-  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2940&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1600607686527-6fb886090705?q=80&w=2000&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?q=80&w=2070&auto=format&fit=crop',
-];
-
-const archProjects = [
+const projects = [
   {
-    id: 1,
-    name: 'Skyview Heights',
-    details: 'A sustainable oasis in the heart of downtown. Platinum LEED certified architecture that breathes with the city.',
-    image: archImages[0],
+    image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop',
+    title: 'Skyview Heights',
+    desc: (
+      <>
+        <span className="font-bold text-black">A sustainable oasis</span> in the heart of downtown. <span className="font-bold text-black">Platinum LEED certified architecture</span> that breathes with the city, featuring sky gardens and natural ventilation.
+      </>
+    ),
+    location: 'Mumbai, 2024',
   },
   {
-    id: 2,
-    name: 'The Pinnacle Tower',
-    details: 'Harnessing solar energy with integrated kinetic glass panels. Future-ready living spaces for the visionary.',
-    image: archImages[1],
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2940&auto=format&fit=crop',
+    title: 'The Pinnacle Tower',
+    desc: (
+      <>
+        <span className="font-bold text-black">Harnessing solar energy</span> with integrated kinetic glass panels. <span className="font-bold text-black">Future-ready living spaces</span> for the visionary, offering panoramic views of the city skyline.
+      </>
+    ),
+    location: 'Pune, 2023',
   },
   {
-    id: 3,
-    name: 'Horizon Residences',
-    details: 'Zero-emission smart homes nestled in lush private gardens. Minimalist design meeting profound ecological consciousness.',
-    image: archImages[2],
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop',
+    title: 'Horizon Residences',
+    desc: (
+      <>
+        <span className="font-bold text-black">Zero-emission smart homes</span> nestled in lush private gardens. <span className="font-bold text-black">Minimalist design</span> meeting profound ecological consciousness in every detail.
+      </>
+    ),
+    location: 'Bangalore, 2022',
   },
 ];
-
-// Pre-defined scroll ranges for each project (avoids hooks in loops)
-const PROJECT_RANGES = [
-  { start: 0.35, enter: 0.41, hold: 0.49, exit: 0.53, gone: 0.57 },
-  { start: 0.55, enter: 0.61, hold: 0.69, exit: 0.73, gone: 0.77 },
-  { start: 0.75, enter: 0.81, hold: 0.89, exit: 0.93, gone: 0.97 },
-];
-
-function ProjectSlide({
-  proj,
-  idx,
-  scrollYProgress,
-}: {
-  proj: (typeof archProjects)[0];
-  idx: number;
-  scrollYProgress: ReturnType<typeof useScroll>['scrollYProgress'];
-}) {
-  const r = PROJECT_RANGES[idx];
-  const opacity   = useTransform(scrollYProgress, [r.start, r.enter, r.hold, r.exit, r.gone], [0, 1, 1, 1, 0]);
-  const scale     = useTransform(scrollYProgress, [r.start, r.enter, r.hold, r.gone], [0.72, 1, 1, 1.06]);
-  const rotate    = useTransform(scrollYProgress, [r.start, r.enter, r.hold, r.gone], [-8, 0, 0, 3]);
-  const textOpacity = useTransform(scrollYProgress, [r.enter, r.enter + 0.04, r.hold, r.exit], [0, 1, 1, 0]);
-
-  return (
-    <motion.div
-      className="absolute inset-0 flex items-center justify-center"
-      style={{ opacity }}
-    >
-      <div className="flex w-full max-w-6xl mx-auto px-12 xl:px-20 items-center gap-16">
-
-        {/* Circular stacked image */}
-        <motion.div className="relative shrink-0" style={{ scale, rotate }}>
-          {/* Back card (offset + grayscale) */}
-          <div
-            className="absolute rounded-[2.5rem] overflow-hidden"
-            style={{
-              width: 'min(36vw, 400px)',
-              height: 'min(36vw, 400px)',
-              top: -16,
-              left: 16,
-              backgroundImage: `url(${archImages[(idx + 1) % archImages.length]})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              filter: 'grayscale(70%) brightness(0.55)',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
-            }}
-          />
-          {/* Front card */}
-          <div
-            className="relative rounded-[2.5rem] overflow-hidden"
-            style={{
-              width: 'min(36vw, 400px)',
-              height: 'min(36vw, 400px)',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
-            }}
-          >
-            <img src={proj.image} alt={proj.name} className="w-full h-full object-cover" />
-          </div>
-          {/* Number badge */}
-          <div className="absolute -bottom-5 -right-5 w-14 h-14 rounded-full bg-black flex items-center justify-center shadow-xl z-10">
-            <span className="font-mono text-white text-xs font-bold">{String(idx + 1).padStart(2, '0')}</span>
-          </div>
-        </motion.div>
-
-        {/* Text */}
-        <motion.div className="flex-1" style={{ opacity: textOpacity }}>
-          <p className="font-sans text-[10px] font-bold tracking-[0.3em] uppercase text-gray-300 mb-4">Featured Property</p>
-          <h3 className="font-heading font-bold text-5xl md:text-6xl text-black leading-tight mb-6">{proj.name}</h3>
-          <p className="font-sans text-lg text-gray-500 leading-relaxed max-w-sm">{proj.details}</p>
-          <div className="mt-8 flex items-center gap-4">
-            <div className="h-px w-12 bg-black" />
-            <span className="font-sans text-xs font-bold tracking-widest uppercase text-black/35">Brickly Homes</span>
-          </div>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
 
 export default function Projects() {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const introRef = useRef<HTMLDivElement>(null);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
+  const { scrollYProgress: introScroll } = useScroll({
+    target: introRef,
     offset: ['start start', 'end end'],
   });
 
-  // Intro word animation
-  const susOpacity = useTransform(scrollYProgress, [0.03, 0.12, 0.28, 0.35], [0, 1, 1, 0]);
-  const susY       = useTransform(scrollYProgress, [0.03, 0.35], [40, -40]);
+  const topHalfY = useTransform(introScroll, [0, 1], ['0%', '-100%']);
+  const bottomHalfY = useTransform(introScroll, [0, 1], ['0%', '100%']);
+
+  // Arch text stays still, fades slightly as split opens
+  const archOpacity = useTransform(introScroll, [0.3, 0.6], [1, 0]);
 
   return (
-    <section ref={containerRef} id="projects" className="relative bg-[#fcfcfc]" style={{ height: '520vh' }}>
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+    <section id="projects-intro" className="bg-white relative">
 
-        {/* ─── ARCHITECTURE INTRO WORD ─── */}
-        <motion.div
-          style={{ opacity: susOpacity, y: susY }}
-          className="absolute inset-0 flex flex-col items-center justify-center text-center z-0 pointer-events-none"
-        >
-          <p className="font-sans text-[10px] tracking-[0.4em] text-black/25 uppercase mb-6">
-            Brickly Homes · 100% Future-Ready
-          </p>
-          <h2 className="font-heading font-bold text-[13vw] tracking-tighter text-black lowercase leading-none">
-            architecture
-          </h2>
-          <p className="font-sans text-sm tracking-wide text-gray-400 mt-6 max-w-xs">
-            Sustainable materials &amp; precision engineering
-          </p>
-        </motion.div>
+      {/* ── Architecture Split Intro ── */}
+      <div ref={introRef} className="relative h-[200vh]">
+        <div className="sticky top-0 h-screen w-full overflow-hidden bg-black flex items-center justify-center">
 
-        {/* ─── PROJECT SLIDES ─── */}
-        {archProjects.map((proj, i) => (
-          <ProjectSlide key={proj.id} proj={proj} idx={i} scrollYProgress={scrollYProgress} />
-        ))}
+          {/* Background Text */}
+          <motion.div style={{ opacity: archOpacity }} className="text-center z-0">
+            <p className="font-sans text-[11px] tracking-[0.4em] text-white/30 mb-6">
+              Brickly Homes · Vision
+            </p>
+            <motion.h2
+              className="font-heading font-bold tracking-tight leading-none lowercase"
+              style={{
+                fontSize: 'clamp(3rem, 12vw, 15rem)',
+                backgroundImage: useMotionTemplate`linear-gradient(to right, white ${useTransform(introScroll, [0, 0.6], [0, 100])}%, rgba(255,255,255,0.15) ${useTransform(introScroll, [0, 0.6], [0, 100])}%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                color: 'transparent'
+              }}
+            >
+              architecture
+            </motion.h2>
+          </motion.div>
 
+          {/* Split image cover */}
+          <div className="absolute inset-0 z-10 pointer-events-none flex flex-col">
+            <motion.div className="relative overflow-hidden" style={{ flex: '1 0 50%', y: topHalfY }}>
+              <img
+                src={projects[0].image}
+                alt="Architecture"
+                className="absolute top-0 left-0 w-full object-cover object-top"
+                style={{ height: '200%' }}
+              />
+            </motion.div>
+
+            <motion.div className="relative overflow-hidden -mt-[1px]" style={{ flex: '1 0 50%', y: bottomHalfY }}>
+              <img
+                src={projects[0].image}
+                alt="Architecture"
+                className="absolute bottom-0 left-0 w-full object-cover object-bottom"
+                style={{ height: '200%' }}
+              />
+            </motion.div>
+          </div>
+        </div>
       </div>
+
+      {/* ── Normal Project Listing Sections ── */}
+      <div className="relative z-20 bg-white pt-20 pb-40">
+        <div className="max-w-7xl mx-auto px-6 md:px-16 flex flex-col gap-40">
+          {projects.map((proj, i) => (
+            <div key={i} className="grid md:grid-cols-[1fr_1.2fr] gap-12 md:gap-20 items-center">
+
+              {/* Left text */}
+              <div className={`${i % 2 !== 0 ? 'md:order-2' : ''}`}>
+                <div className="mb-4">
+                  <span className="font-sans text-[11px] font-bold tracking-[0.25em] text-gray-400">
+                    {proj.location}
+                  </span>
+                </div>
+
+                {/* Scroll fill gray to black */}
+                <FillText fillStart={0.1} fillEnd={0.6}>
+                  <h3 className="font-heading font-bold text-4xl md:text-5xl lg:text-6xl leading-[1.05] tracking-tight mb-6">
+                    {proj.title}
+                  </h3>
+                </FillText>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="font-sans text-xl md:text-2xl font-medium tracking-tight text-gray-400 max-w-md leading-relaxed"
+                >
+                  {proj.desc}
+                </motion.p>
+              </div>
+
+              {/* Right image */}
+              <div className={`relative h-[600px] rounded-xl overflow-hidden ${i % 2 !== 0 ? 'md:order-1' : ''}`}>
+                <ImageReveal
+                  src={proj.image}
+                  alt={proj.title}
+                  direction={i % 2 === 0 ? 'left' : 'right'}
+                  className="w-full h-full"
+                />
+              </div>
+
+            </div>
+          ))}
+        </div>
+      </div>
+
     </section>
   );
 }

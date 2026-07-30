@@ -1,5 +1,5 @@
-import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
-import { useRef, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useState } from 'react';
 
 const galleryImages = [
   { src: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071&auto=format&fit=crop', label: 'The Grand Facade', sub: 'Mumbai, 2024' },
@@ -10,18 +10,7 @@ const galleryImages = [
   { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop', label: 'Elevated Living', sub: 'Delhi, 2019' },
 ];
 
-// Floating positions — scattered layout
-const floatLayout = [
-  { top: '8%',  left: '4%',   w: '28%', rot: -3,  delay: 0 },
-  { top: '5%',  left: '36%',  w: '22%', rot: 1.5, delay: 0.08 },
-  { top: '3%',  left: '62%',  w: '32%', rot: -1,  delay: 0.16 },
-  { top: '52%', left: '2%',   w: '24%', rot: 2,   delay: 0.12 },
-  { top: '55%', left: '30%',  w: '30%', rot: -2,  delay: 0.2 },
-  { top: '50%', left: '64%',  w: '26%', rot: 1,   delay: 0.06 },
-];
-
-// Full-screen gallery overlay
-function GalleryPage({ onClose }: { onClose: () => void }) {
+function GalleryPage({ onClose, initialIndex = 0 }: { onClose: () => void, initialIndex?: number }) {
   return (
     <motion.div
       initial={{ clipPath: 'inset(0 0 100% 0)' }}
@@ -33,7 +22,7 @@ function GalleryPage({ onClose }: { onClose: () => void }) {
     >
       <button
         onClick={onClose}
-        className="fixed top-8 right-8 z-50 w-12 h-12 border border-white/20 bg-white/5 flex items-center justify-center text-white hover:bg-white/15 transition-colors"
+        className="fixed top-8 right-8 z-50 w-12 h-12 border border-white/20 bg-white/5 flex items-center justify-center text-white hover:bg-white/15 transition-colors rounded-full"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -41,10 +30,10 @@ function GalleryPage({ onClose }: { onClose: () => void }) {
       </button>
 
       {galleryImages.map((img, i) => (
-        <div key={i} className="relative h-screen w-full flex items-end" style={{ scrollSnapAlign: 'start' }}>
+        <div key={i} className="relative h-screen w-full flex items-end" style={{ scrollSnapAlign: 'start' }} ref={el => { if (i === initialIndex && el) el.scrollIntoView() }}>
           <motion.img src={img.src} alt={img.label}
             className="absolute inset-0 w-full h-full object-cover"
-            initial={{ scale: 1.08, opacity: 0 }}
+            initial={{ scale: 1.06, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: false, amount: 0.5 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
@@ -57,7 +46,7 @@ function GalleryPage({ onClose }: { onClose: () => void }) {
             viewport={{ once: false, amount: 0.5 }}
             transition={{ duration: 0.9, delay: 0.2 }}
           >
-            <span className="font-mono text-xs text-white/40 block mb-2">{String(i + 1).padStart(2, '0')} / {String(galleryImages.length).padStart(2, '0')}</span>
+            <span className="font-sans text-xs text-white/40 block mb-2">{String(i + 1).padStart(2, '0')} / {String(galleryImages.length).padStart(2, '00')}</span>
             <h2 className="font-heading font-bold text-5xl md:text-7xl text-white">{img.label}</h2>
             <p className="font-sans text-white/60 font-medium mt-2">{img.sub}</p>
           </motion.div>
@@ -68,113 +57,95 @@ function GalleryPage({ onClose }: { onClose: () => void }) {
 }
 
 export default function Gallery() {
-  const [showGallery, setShowGallery] = useState(false);
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  // Track mouse for floating parallax
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      setMouse({
-        x: (e.clientX / window.innerWidth - 0.5) * 2,
-        y: (e.clientY / window.innerHeight - 0.5) * 2,
-      });
-    };
-    window.addEventListener('mousemove', onMove);
-    return () => window.removeEventListener('mousemove', onMove);
-  }, []);
+  const [showGallery, setShowGallery] = useState<{ show: boolean, index: number }>({ show: false, index: 0 });
 
   return (
     <>
       <AnimatePresence>
-        {showGallery && <GalleryPage onClose={() => setShowGallery(false)} />}
+        {showGallery.show && <GalleryPage onClose={() => setShowGallery({ show: false, index: 0 })} initialIndex={showGallery.index} />}
       </AnimatePresence>
 
-      <section id="gallery" ref={sectionRef} className="relative bg-white overflow-hidden" style={{ minHeight: '100vh', paddingBottom: '8rem' }}>
+      <section id="gallery" className="relative bg-[#111] text-white overflow-hidden py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-24">
+            <div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.6 }}
+                className="flex items-center gap-3 mb-6"
+              >
+                <div className="w-8 h-px bg-white/30" />
+                <span className="font-sans text-xs font-semibold tracking-[0.25em] text-white/50">Visual Portfolio</span>
+              </motion.div>
 
-        {/* Header */}
-        <div className="max-w-7xl mx-auto px-12 xl:px-20 pt-28 pb-16 flex flex-col md:flex-row md:items-end justify-between gap-8 relative z-10">
-          <div>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }} transition={{ duration: 0.6 }}
-              className="flex items-center gap-3 mb-4"
+              <h2 className="font-heading font-normal text-4xl md:text-6xl leading-tight">
+                Project<br/>
+                <span className="text-white/40">Gallery.</span>
+              </h2>
+            </div>
+            
+            <button
+              onClick={() => setShowGallery({ show: true, index: 0 })}
+              className="group flex items-center gap-3 font-sans text-sm font-bold tracking-[0.12em] text-white self-start md:self-auto"
             >
-              <div className="w-8 h-px bg-black" />
-              <span className="font-sans text-xs font-bold tracking-[0.25em] uppercase text-gray-400">Visual Portfolio</span>
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 50, filter: 'blur(8px)' }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              viewport={{ once: false, amount: 0.3 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="font-heading font-bold text-5xl md:text-6xl text-black"
-            >
-              Project <span className="italic font-light">Gallery</span>
-            </motion.h2>
+              <span>Open Gallery</span>
+              <span className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-300">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </span>
+            </button>
           </div>
 
-          <motion.button
-            initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
-            viewport={{ once: true }} transition={{ delay: 0.3 }}
-            onClick={() => setShowGallery(true)}
-            className="group flex items-center gap-3 font-sans text-sm font-bold tracking-[0.12em] uppercase text-black self-start md:self-auto"
-          >
-            <span>Open Gallery</span>
-            <span className="w-8 h-8 rounded-full border border-black flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors duration-300">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </span>
-          </motion.button>
-        </div>
-
-        {/* Floating image field */}
-        <div className="relative mx-auto max-w-7xl px-12 xl:px-20" style={{ height: '75vh' }}>
-          {galleryImages.map((img, i) => {
-            const lay = floatLayout[i];
-            // Each card floats differently based on mouse
-            const depth = (i % 3) + 1; // 1,2,3 parallax depth
-            const px = mouse.x * depth * 8;
-            const py = mouse.y * depth * 6;
-
-            return (
-              <motion.div
-                key={i}
-                className="absolute cursor-pointer group"
-                style={{ top: lay.top, left: lay.left, width: lay.w, rotate: lay.rot }}
-                initial={{ opacity: 0, y: 60, scale: 0.9 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, margin: '-40px' }}
-                transition={{ duration: 1, delay: lay.delay, ease: [0.16, 1, 0.3, 1] }}
-                animate={{ x: px, y: py }}
-                // @ts-ignore
-                transition_animate={{ type: 'spring', stiffness: 60, damping: 20 }}
-                onClick={() => setShowGallery(true)}
-                whileHover={{ scale: 1.04, rotate: 0, zIndex: 20 }}
+          <div className="border-b border-white/10">
+            {galleryImages.map((img, i) => (
+              <div 
+                key={i} 
+                className="group relative border-t border-white/10 py-16 md:py-20 cursor-pointer overflow-hidden transition-colors"
+                onClick={() => setShowGallery({ show: true, index: i })}
               >
-                <div className="overflow-hidden rounded-2xl shadow-xl">
-                  <img
-                    src={img.src}
-                    alt={img.label}
-                    className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    style={{ aspectRatio: i % 2 === 0 ? '4/3' : '3/4' }}
-                  />
-                </div>
-                {/* Label on hover */}
-                <motion.div
-                  className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                {/* Background Image Reveal with right-to-left curtain animation */}
+                <div 
+                  className="absolute inset-0 z-0 [clip-path:inset(0_0_0_100%)] group-hover:[clip-path:inset(0_0_0_0)] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]"
                 >
-                  <div className="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2">
-                    <p className="font-heading font-bold text-black text-sm">{img.label}</p>
-                    <p className="font-sans text-gray-400 text-xs">{img.sub}</p>
-                  </div>
-                </motion.div>
-              </motion.div>
-            );
-          })}
-        </div>
+                  <img src={img.src} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40" />
+                </div>
 
+                {/* Content */}
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 md:gap-16">
+                  
+                  {/* Left: Number + Subtitle */}
+                  <div className="flex items-center gap-6 md:w-[30%]">
+                    <div className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center shrink-0">
+                      <span className="font-mono text-sm text-white">{String(i + 1).padStart(2, '0')}</span>
+                    </div>
+                    <p className="font-sans text-sm text-white/60 group-hover:text-white transition-colors duration-300">
+                      {img.sub}
+                    </p>
+                  </div>
+
+                  {/* Center: Title */}
+                  <div className="flex-1 text-left md:text-center">
+                    <h3 className="relative inline-block font-sans font-light tracking-tight text-white group-hover:scale-[1.02] transition-transform duration-500 origin-center" style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', lineHeight: 1 }}>
+                      {img.label}
+                      <span className="absolute left-0 -bottom-2 w-full h-[2px] md:h-1 bg-white scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]" />
+                    </h3>
+                  </div>
+
+                  {/* Right: Arrow */}
+                  <div className="hidden md:flex items-center justify-end shrink-0 md:w-[15%]">
+                    <svg viewBox="0 0 24 24" fill="none" className="w-10 h-10 stroke-white opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-8 group-hover:translate-x-0" strokeWidth={1}>
+                      <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
       </section>
     </>
   );

@@ -32,7 +32,7 @@ const PHASES = [
   {
     range: [0.67, 1.01],
     tag: '03',
-    eyebrow: 'Completion',
+    eyebrow: 'Handover',
     headline: 'Ready for\nlife.',
     body: 'The final masterpiece. Unmatched finishing touches and quality control make it ready for generations to come.',
   },
@@ -229,9 +229,9 @@ export default function Hero() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
-            className="font-sans text-[10px] font-bold tracking-[0.28em] uppercase text-gray-400 mb-10"
+            className="font-sans text-xl font-medium tracking-tight text-gray-400 mb-12"
           >
-            Skyline Homes · Premium Real Estate
+            <span className="font-bold text-black">This isn't just</span> about real estate.
           </motion.p>
 
           {/* Eyebrow */}
@@ -242,11 +242,11 @@ export default function Hero() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 12 }}
               transition={{ duration: 0.35 }}
-              className="flex items-center gap-3 mb-5"
+              className="flex items-center gap-3 mb-6"
             >
-              <span className="font-mono text-[10px] text-gray-300">{phase.tag}</span>
-              <span className="h-px w-8 bg-gray-200" />
-              <span className="font-sans text-[11px] font-bold tracking-[0.22em] uppercase text-amber-600">
+              <span className="font-sans text-sm font-semibold tracking-tight text-gray-400">{phase.tag}</span>
+              <span className="h-px w-10 bg-gray-200" />
+              <span className="font-sans text-lg font-bold tracking-tight text-amber-600">
                 {phase.eyebrow}
               </span>
             </motion.div>
@@ -260,7 +260,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -60, filter: 'blur(8px)' }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="font-heading font-bold text-[clamp(2.8rem,4.2vw,5rem)] text-black leading-[1.02] mb-6 whitespace-pre-line"
+              className="font-heading font-extrabold text-[clamp(3.8rem,6.5vw,7.5rem)] text-black leading-[0.98] mb-8 whitespace-pre-line tracking-tight"
             >
               {phase.headline}
             </motion.h1>
@@ -274,7 +274,7 @@ export default function Hero() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="font-sans text-[15px] text-gray-500 leading-relaxed max-w-[330px]"
+              className="font-sans text-xl text-gray-500 leading-relaxed max-w-xl"
             >
               {phase.body}
             </motion.p>
@@ -285,7 +285,7 @@ export default function Hero() {
             {PHASES.map((p, i) => (
               <div key={i} className="flex flex-col gap-1.5">
                 <span
-                  className="font-sans text-[10px] font-bold tracking-widest uppercase transition-colors duration-400"
+                  className="font-sans text-sm font-bold tracking-tight transition-colors duration-400"
                   style={{ color: i === phaseIndex ? '#111' : '#d1d5db' }}
                 >
                   {p.eyebrow}
@@ -313,7 +313,7 @@ export default function Hero() {
                 transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
                 className="h-px w-8 bg-gray-300"
               />
-              <span className="font-sans text-[10px] tracking-widest uppercase text-gray-400">
+              <span className="font-sans text-[10px] tracking-widest text-gray-400">
                 Scroll to explore
               </span>
             </motion.div>
@@ -373,7 +373,7 @@ export default function Hero() {
               transition={{ duration: 0.35 }}
               className="absolute bottom-7 left-7 z-20 flex items-center gap-2"
             >
-              <span className="font-sans text-[9px] font-bold tracking-[0.22em] uppercase text-black/30">
+              <span className="font-sans text-xs font-bold tracking-[0.22em] text-black/30">
                 {phase.eyebrow}
               </span>
             </motion.div>
@@ -389,7 +389,7 @@ export default function Hero() {
                   transition={{ duration: 0.3 }}
                 />
               </div>
-              <span className="font-sans text-[9px] tracking-widest text-black/20 uppercase">
+              <span className="font-sans text-[9px] tracking-widest text-black/20">
                 {loadPct}%
               </span>
             </div>

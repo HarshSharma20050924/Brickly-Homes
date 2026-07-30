@@ -1,45 +1,15 @@
 import { motion, useScroll, useTransform } from 'motion/react';
 import { useState, useEffect } from 'react';
 
-// Custom dots icon
-function DotsIcon() {
-  return (
-    <svg width="18" height="4" viewBox="0 0 18 4" fill="currentColor">
-      <circle cx="2" cy="2" r="2" />
-      <circle cx="9" cy="2" r="2" />
-      <circle cx="16" cy="2" r="2" />
-    </svg>
-  );
-}
-
-const spanVariants = {
-  initial: { y: 0 },
-  hover: { y: -20 }
-};
-
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <motion.a
+    <a
       href={href}
-      className="relative overflow-hidden flex flex-col h-5 leading-[20px] items-center cursor-pointer"
-      initial="initial"
-      whileHover="hover"
+      className="relative font-sans text-sm font-medium text-gray-500 hover:text-black transition-colors duration-200 group"
     >
-      <motion.span
-        className="text-gray-600 block transition-colors"
-        variants={spanVariants}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {children}
-      </motion.span>
-      <motion.span
-        className="absolute top-5 text-black block"
-        variants={spanVariants}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      >
-        {children}
-      </motion.span>
-    </motion.a>
+      {children}
+      <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-black group-hover:w-full transition-all duration-300 ease-out" />
+    </a>
   );
 }
 
@@ -53,51 +23,41 @@ export default function Navbar({ onContactClick }: { onContactClick?: () => void
     });
   }, [scrollY]);
 
-  const navBackground = useTransform(
-    scrollY,
-    [0, 50],
-    ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.95)']
-  );
-
-  const navBackdropBlur = useTransform(
-    scrollY,
-    [0, 50],
-    ['blur(0px)', 'blur(12px)']
-  );
+  const navBackground = useTransform(scrollY, [0, 50], ['rgba(255,255,255,0)', 'rgba(255,255,255,0.95)']);
+  const navBlur = useTransform(scrollY, [0, 50], ['blur(0px)', 'blur(12px)']);
 
   return (
     <motion.header
-      style={{
-        backgroundColor: navBackground,
-        backdropFilter: navBackdropBlur,
-      }}
-      className="fixed top-0 left-0 right-0 z-40 transition-shadow duration-500 data-[scrolled=true]:shadow-sm data-[scrolled=true]:border-b data-[scrolled=true]:border-gray-100"
-      data-scrolled={isScrolled}
+      style={{ backgroundColor: navBackground, backdropFilter: navBlur }}
+      className={`fixed top-0 left-0 right-0 z-40 transition-shadow duration-500 ${isScrolled ? 'shadow-sm border-b border-gray-100' : ''}`}
     >
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
+
+        {/* Logo — clean wordmark like the reference */}
         <div className="flex items-center gap-2 cursor-pointer">
-          <span className="font-heading font-bold text-2xl tracking-tight text-black">BRICKLY HOMES</span>
+          <div className="w-7 h-7 bg-black rounded-sm flex items-center justify-center shrink-0">
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 stroke-white" strokeWidth={2.5}>
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <span className="font-heading font-bold text-[15px] tracking-tight text-black">BRICKLY</span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-10 font-sans text-sm font-medium">
+        {/* Nav links */}
+        <nav className="hidden md:flex items-center gap-10">
           <NavLink href="#about">About</NavLink>
           <NavLink href="#projects">Projects</NavLink>
           <NavLink href="#gallery">Gallery</NavLink>
         </nav>
 
-        {/* Three-dot contact button */}
-        <button
-          onClick={onContactClick}
-          className="flex items-center gap-3 group"
-          aria-label="Contact"
+        {/* Contact pill — like the reference "Sign In" rounded pill */}
+        <a
+          href="#contact"
+          className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-full font-sans text-sm font-semibold hover:bg-gray-800 transition-colors"
         >
-          <span className="hidden md:inline font-sans text-sm font-medium text-gray-600 group-hover:text-black transition-colors">
-            Contact
-          </span>
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors text-black">
-            <DotsIcon />
-          </div>
-        </button>
+          Contact Us
+        </a>
       </div>
     </motion.header>
   );
