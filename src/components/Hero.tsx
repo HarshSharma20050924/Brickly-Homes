@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-
-// ── Config ────────────────────────────────────────────────────────────────────
-const TOTAL_FRAMES = 1749;
-
-function getFrameUrl(i: number) {
-  const n = i + 136;
-  return `/image-asset/frame_${String(n).padStart(6, '0')}.jpg`;
-}
+import { loadedImages, startPreloading, TOTAL_FRAMES } from '../utils/frameCache';
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
