@@ -42,7 +42,6 @@ const PHASES = [
 export default function Hero() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<(HTMLImageElement | null)[]>(Array(TOTAL_FRAMES).fill(null));
 
   // Smooth frame interpolation
   const targetFrameRef = useRef(0);   // where scroll says we should be
@@ -65,7 +64,7 @@ export default function Hero() {
     if (!canvas) return false;
 
     const targetIdx = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.round(index)));
-    let img = imagesRef.current[targetIdx];
+    let img = loadedImages[targetIdx];
 
     // Fallback: If exact frame is missing/loading, find closest available frame
     if (!img || !img.complete || img.naturalWidth === 0) {
@@ -77,12 +76,12 @@ export default function Hero() {
         const left = targetIdx - offset;
         const right = targetIdx + offset;
 
-        if (left >= 0 && imagesRef.current[left]?.complete && imagesRef.current[left]?.naturalWidth! > 0) {
+        if (left >= 0 && loadedImages[left]?.complete && loadedImages[left]?.naturalWidth! > 0) {
           closest = left;
           minDiff = offset;
           break;
         }
-        if (right < TOTAL_FRAMES && imagesRef.current[right]?.complete && imagesRef.current[right]?.naturalWidth! > 0) {
+        if (right < TOTAL_FRAMES && loadedImages[right]?.complete && loadedImages[right]?.naturalWidth! > 0) {
           closest = right;
           minDiff = offset;
           break;
@@ -90,7 +89,7 @@ export default function Hero() {
       }
 
       if (closest !== -1) {
-        img = imagesRef.current[closest];
+        img = loadedImages[closest];
       } else {
         return false;
       }
@@ -169,72 +168,28 @@ export default function Hero() {
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
-  // ── Staged Priority Preloader ─────────────────────────────────────────────
+  // ── Connect to Preloader ──────────────────────────────────────────────────
   useEffect(() => {
-    let loaded = 0;
-    const isLoaded = new Uint8Array(TOTAL_FRAMES);
-
-    // Build loading priority order:
-    // Pass 1: Every 5th keyframe (0, 5, 10... 1745) for fast end-to-end coverage
-    // Pass 2: Every 2nd frame
-    // Pass 3: All remaining frames
-    const queue: number[] = [];
-
-    // Stage 1: Keyframes across full timeline
-    for (let i = 0; i < TOTAL_FRAMES; i += 5) {
-      queue.push(i);
-    }
-    // Stage 2: Half-frames
-    for (let i = 0; i < TOTAL_FRAMES; i += 2) {
-      if (i % 5 !== 0) queue.push(i);
-    }
-    // Stage 3: Remaining frames
-    for (let i = 0; i < TOTAL_FRAMES; i++) {
-      if (i % 2 !== 0 && i % 5 !== 0) queue.push(i);
-    }
-
-    let queueIdx = 0;
-    const CONCURRENCY = 16;
-
-    const loadNext = () => {
-      // Find next unloaded frame from queue
-      while (queueIdx < queue.length && isLoaded[queue[queueIdx]]) {
-        queueIdx++;
+    const checkStatus = () => {
+      const loadedNum = loadedImages.filter((img) => img !== null && img.complete).length;
+      setLoadedCount(loadedNum);
+      if (loadedNum >= 1) {
+        setCanvasReady(true);
+        drawFrame(targetFrameRef.current);
       }
-      if (queueIdx >= queue.length) return;
-
-      const i = queue[queueIdx++];
-      isLoaded[i] = 1;
-
-      const img = new Image();
-      img.src = getFrameUrl(i);
-
-      const onDone = () => {
-        loaded++;
-        setLoadedCount(loaded);
-        if (loaded === 1) setCanvasReady(true);
-        loadNext();
-      };
-
-      img.onload = () => {
-        imagesRef.current[i] = img;
-        // Draw the very first frame immediately so the canvas is never blank
-        if (i === 0) {
-          // Use a tiny timeout so the canvas has had one paint cycle to size itself
-          setTimeout(() => {
-            drawFrame(0);
-            lastDrawnRef.current = 0;
-          }, 0);
-        }
-        onDone();
-      };
-      img.onerror = onDone;
     };
 
-    // Kick off CONCURRENCY number of parallel loaders
-    for (let j = 0; j < CONCURRENCY; j++) {
-      loadNext();
-    }
+    startPreloading(
+      () => {
+        checkStatus();
+      },
+      () => {
+        checkStatus();
+      }
+    );
+
+    const interval = setInterval(checkStatus, 300);
+    return () => clearInterval(interval);
   }, [drawFrame]);
 
   // ── Scroll → target frame + phase ───────────────────────────────────────

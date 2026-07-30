@@ -21,9 +21,7 @@ const contacts = [
 ];
 
 function HomePage() {
-  const [loading, setLoading] = useState(() => {
-    return !sessionStorage.getItem('hasLoadedIntro');
-  });
+  const [loading, setLoading] = useState(true);
   const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
@@ -31,7 +29,6 @@ function HomePage() {
   }, []);
 
   const handleComplete = () => {
-    sessionStorage.setItem('hasLoadedIntro', 'true');
     setLoading(false);
   };
 
