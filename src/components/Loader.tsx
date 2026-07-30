@@ -8,7 +8,8 @@ export default function Loader({ onComplete }: { onComplete: () => void }) {
   const barRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  const targetPctRef = useRef(0);
+  const realPctRef = useRef(0);
+  const smoothPctRef = useRef(0);
   const currentPctRef = useRef(0);
   const isKeyframesDoneRef = useRef(false);
 
@@ -18,21 +19,29 @@ export default function Loader({ onComplete }: { onComplete: () => void }) {
     // Start real preloading of keyframes
     startPreloading(
       (pct) => {
-        targetPctRef.current = pct;
+        realPctRef.current = pct;
       },
       () => {
         isKeyframesDoneRef.current = true;
-        targetPctRef.current = 100;
+        realPctRef.current = 100;
       }
     );
 
     const animate = () => {
-      // Smooth lerp towards target percentage
-      const diff = targetPctRef.current - currentPctRef.current;
+      // Smooth baseline progression up to 85% so it never stalls at 0%
+      if (smoothPctRef.current < 85 && !isKeyframesDoneRef.current) {
+        smoothPctRef.current += 0.8;
+      } else if (isKeyframesDoneRef.current) {
+        smoothPctRef.current = 100;
+      }
+
+      const targetPct = Math.max(smoothPctRef.current, realPctRef.current);
+      const diff = targetPct - currentPctRef.current;
+
       if (Math.abs(diff) > 0.05) {
-        currentPctRef.current += diff * 0.12; // Smooth progression
+        currentPctRef.current += diff * 0.15;
       } else {
-        currentPctRef.current = targetPctRef.current;
+        currentPctRef.current = targetPct;
       }
 
       const displayValue = Math.min(100, Math.round(currentPctRef.current));
@@ -47,14 +56,14 @@ export default function Loader({ onComplete }: { onComplete: () => void }) {
         }
       }
 
-      if (displayValue >= 100 && isKeyframesDoneRef.current) {
+      if (displayValue >= 100 && (isKeyframesDoneRef.current || currentPctRef.current >= 99.5)) {
         if (numberRef.current) numberRef.current.textContent = '100';
         if (barRef.current) barRef.current.style.transform = 'scaleX(1)';
 
         setTimeout(() => {
           setIsVisible(false);
-          setTimeout(onComplete, 500);
-        }, 250);
+          setTimeout(onComplete, 400);
+        }, 200);
       } else {
         rafRef.current = requestAnimationFrame(animate);
       }
@@ -128,9 +137,8 @@ export default function Loader({ onComplete }: { onComplete: () => void }) {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
               <span className="font-sans text-[10px] font-bold tracking-[0.3em] text-gray-400 uppercase">
-                Preparing Architectural Sequence
+                LOADING ASSETS
               </span>
             </div>
           </motion.div>

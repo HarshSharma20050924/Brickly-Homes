@@ -7,32 +7,40 @@ export function getFrameUrl(i: number) {
   return `/image-asset/frame_${String(n).padStart(6, '0')}.jpg`;
 }
 
-// Stage 1 keyframe indices (every 5th frame = 350 keyframes)
+// Keyframe indices (every 5th frame = 350 keyframes)
 export const KEYFRAME_INDICES: number[] = [];
 for (let i = 0; i < TOTAL_FRAMES; i += 5) {
   KEYFRAME_INDICES.push(i);
 }
 
+const progressListeners = new Set<(pct: number) => void>();
+const completeListeners = new Set<() => void>();
+
 let isPreloadingStarted = false;
-let globalProgressCallback: ((pct: number) => void) | null = null;
-let globalCompleteCallback: (() => void) | null = null;
+let isKeyframesComplete = false;
+
+function notifyProgress() {
+  const totalKeyframes = KEYFRAME_INDICES.length;
+  let loadedCount = 0;
+  for (let k = 0; k < totalKeyframes; k++) {
+    if (isFrameLoaded[KEYFRAME_INDICES[k]]) loadedCount++;
+  }
+  const pct = Math.min(100, Math.round((loadedCount / totalKeyframes) * 100));
+
+  progressListeners.forEach((cb) => cb(pct));
+
+  if (loadedCount >= totalKeyframes && !isKeyframesComplete) {
+    isKeyframesComplete = true;
+    completeListeners.forEach((cb) => cb());
+  }
+}
 
 export function startPreloading(onProgress?: (pct: number) => void, onComplete?: () => void) {
-  if (onProgress) globalProgressCallback = onProgress;
-  if (onComplete) globalCompleteCallback = onComplete;
+  if (onProgress) progressListeners.add(onProgress);
+  if (onComplete) completeListeners.add(onComplete);
 
-  const totalKeyframes = KEYFRAME_INDICES.length;
-  const currentLoadedKeyframes = KEYFRAME_INDICES.filter((idx) => isFrameLoaded[idx]).length;
-  const initialPct = Math.min(100, Math.round((currentLoadedKeyframes / totalKeyframes) * 100));
-
-  if (globalProgressCallback) {
-    globalProgressCallback(initialPct);
-  }
-
-  if (currentLoadedKeyframes >= totalKeyframes) {
-    if (globalCompleteCallback) globalCompleteCallback();
-    return;
-  }
+  // Immediately notify listener of current progress
+  notifyProgress();
 
   if (isPreloadingStarted) return;
   isPreloadingStarted = true;
@@ -48,9 +56,7 @@ export function startPreloading(onProgress?: (pct: number) => void, onComplete?:
   }
 
   let queueIdx = 0;
-  let keyframesLoadedCount = currentLoadedKeyframes;
-  const CONCURRENCY = 18;
-  let hasCompleted = false;
+  const CONCURRENCY = 20;
 
   const loadNext = () => {
     while (queueIdx < queue.length && isFrameLoaded[queue[queueIdx]]) {
@@ -66,18 +72,7 @@ export function startPreloading(onProgress?: (pct: number) => void, onComplete?:
     const onDone = () => {
       isFrameLoaded[i] = 1;
       loadedImages[i] = img;
-
-      if (i % 5 === 0) {
-        keyframesLoadedCount++;
-        const pct = Math.min(100, Math.round((keyframesLoadedCount / totalKeyframes) * 100));
-        if (globalProgressCallback) globalProgressCallback(pct);
-
-        if (keyframesLoadedCount >= totalKeyframes && !hasCompleted) {
-          hasCompleted = true;
-          if (globalCompleteCallback) globalCompleteCallback();
-        }
-      }
-
+      notifyProgress();
       loadNext();
     };
 
